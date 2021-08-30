@@ -1,0 +1,13 @@
+# List of untracked files to ignore
+
+Cash/
+
+Code/
+
+resources/
+
+DeepLearning/Data/
+
+Models/ElectroMechanical/ControlTestEquipment
+
+Models/ElectroMechanical/Controller.slx
