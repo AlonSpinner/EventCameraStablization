@@ -1,8 +1,9 @@
+%% get vars
+params.pitchOnly=true;
+[sequences,responses,lgraph,options]=ExpiramentSetup(params);
 %% Train
-[sequences,responses,lgraph,options]=ExpiramentSetup();
 net=trainNetwork(sequences,responses,lgraph,options);
-
 %% Save
-project     = simulinkproject();
+project=matlab.project.rootProject;
 projectRoot = project.RootFolder;
 save(fullfile(projectRoot,'E2wNet.mat'),'net','-mat');

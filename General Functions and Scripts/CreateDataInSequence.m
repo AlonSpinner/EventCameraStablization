@@ -6,6 +6,10 @@ if nargin<1
     IterationsAmnt=1;
 end
 
+%note1: maxOmega usually set to deg2rad([4 6 10]), now set to deg2rad([0 6
+%0]).
+%note2: maxrIC now set to have 0 yaw and roll.
+
 %Static variables
 DataFolder=fullfile(getProjRoot(),'DeepLearning','Data');
 fileNames={'RGB.mp4',...
@@ -15,12 +19,12 @@ fileNames={'RGB.mp4',...
     'eventMask.mat'};
 maxrIC=getDictionaryDesignData('maxAngles');
 ts_camera=getDictionaryDesignData('ts_camera');
-simTimeRange=[8,12]*ts_camera;
-set_param('DeepLearningDataCreator/NoRecordTime','const',num2str('5*ts_camera')); %no record time at start
+simTimeRange=[40,45]*ts_camera;
+set_param('DeepLearningDataCreator/NoRecordTime','const',num2str('9*ts_camera')); %no record time at start
 
 for kk=1:IterationsAmnt
     %Change initial condition
-    rIC=maxrIC.*rand([1,3]).*randSign([1,3]);
+    rIC=maxrIC.*rand([1,3]).*randSign([1,3]) .* [0 1 0];
     set_param('DeepLearningDataCreator/Base Dynamics and conversion to Scene coordiantes/RotationIntegrator',...
         'InitialCondition',sprintf('[%s]',num2str(rIC)));
     simulationTime=simTimeRange(1)+diff(simTimeRange)*rand;
@@ -30,7 +34,7 @@ for kk=1:IterationsAmnt
     pause(1); %wait 1 sec so sim can wrap up
     
     %Make directory with simulation number and move files to new directory
-    newDirPath=GetNewDirPath(DataFolder);
+    newDirPath=GetNewDirPath(DataFolder,'pitchOnly_Long');
     if ~exist(newDirPath, 'dir') %folder sim73 got stuck, I just overwrite onto it
         mkdir(newDirPath);
     end
@@ -50,9 +54,12 @@ set_param('DeepLearningDataCreator/Base Dynamics and conversion to Scene coordia
 save_system(modelName);
 end
 %% Functions
-function newDirPath=GetNewDirPath(DataFolder)
-listing=dir(DataFolder);
+function newDirPath=GetNewDirPath(DataFolder,subFolder)
+if nargin<2
+    subFolder='';
+end
+listing=dir(fullfile(DataFolder,subFolder));
 listing=listing(3:end); %remove first two entries that are not relevant
 dirAmnt=sum([listing.isdir]);
-newDirPath=fullfile(DataFolder,sprintf('sim%g',dirAmnt));
+newDirPath=fullfile(DataFolder,subFolder,sprintf('sim%g',dirAmnt));
 end
