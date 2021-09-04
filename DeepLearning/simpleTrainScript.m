@@ -1,8 +1,13 @@
 %% get vars
+params.dataFolder="pitchOnly";
 params.pitchOnly=true;
-[sequences,responses,lgraph,options]=ExpiramentSetup(params);
+params.solver="sgdm";
+params.imageSize="imageNet";
+params.maxEpochs=50;
+params.pitchOnlyNet="Simple";
+[ds,lgraph,options]=ExpiramentSetup(params);
 %% Train
-net=trainNetwork(sequences,responses,lgraph,options);
+net=trainNetwork(ds,lgraph,options);
 %% Save
 project=matlab.project.rootProject;
 projectRoot = project.RootFolder;

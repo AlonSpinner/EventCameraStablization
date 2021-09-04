@@ -1,50 +1,56 @@
 function CreateDataInSequence(IterationsAmnt)
-modelName='DeepLearningDataCreator';
-open_system(modelName,'loadonly');
-
-if nargin<1
-    IterationsAmnt=1;
-end
-
-%note1: maxOmega usually set to deg2rad([4 6 10]), now set to deg2rad([0 6
-%0]).
-%note2: maxrIC now set to have 0 yaw and roll.
+if nargin<1, IterationsAmnt=1; end
 
 %Static variables
+modelName='DeepLearningDataCreator';
+open_system(modelName,'loadonly');
 DataFolder=fullfile(getProjRoot(),'DeepLearning','Data');
-fileNames={'RGB.mp4',...
-    'Orientation.mat',...
-    'logImage.mp4',...
-    'eventMask.mp4',...
-    'eventMask.mat'};
-maxrIC=getDictionaryDesignData('maxAngles');
+
+expiramentName='pitchOnly_Long';
 ts_camera=getDictionaryDesignData('ts_camera');
-simTimeRange=[40,45]*ts_camera;
-set_param('DeepLearningDataCreator/NoRecordTime','const',num2str('9*ts_camera')); %no record time at start
+simulationTime=50*ts_camera;
+maxrIC=getDictionaryDesignData('maxAngles');
+set_param('DeepLearningDataCreator/NoRecordTime','const',...
+    num2str('10*ts_camera')); %no record time at start
+%note1: maxOmega usually set to deg2rad([4 6 10]), now set to deg2rad([0 6
+%0]). This is done in dictionary
+%note2: maxrIC now set to have 0 yaw and roll. This is done in this script
+
+%Make directories
+expiramentPath=fullfile(DataFolder,expiramentName);
+expiramentDataPath=fullfile(expiramentPath,'data');
+expiramentMoviesPath=fullfile(expiramentPath,'movies');
+if ~exist(expiramentPath, 'dir'), mkdir(expiramentPath); end
+if ~exist(expiramentDataPath,'dir'), mkdir(expiramentDataPath); end
+if ~exist(expiramentMoviesPath,'dir'), mkdir(expiramentMoviesPath); end
 
 for kk=1:IterationsAmnt
     %Change initial condition
-    rIC=maxrIC.*rand([1,3]).*randSign([1,3]) .* [0 1 0];
+    rIC=maxrIC.*rand([1,3]).*randSign([1,3]) .* [0 1 0]; %multiplcation by zero here
     set_param('DeepLearningDataCreator/Base Dynamics and conversion to Scene coordiantes/RotationIntegrator',...
         'InitialCondition',sprintf('[%s]',num2str(rIC)));
-    simulationTime=simTimeRange(1)+diff(simTimeRange)*rand;
     
     %simulate
     sim(modelName,'StartTime','0','StopTime',num2str(simulationTime));
     pause(1); %wait 1 sec so sim can wrap up
     
-    %Make directory with simulation number and move files to new directory
-    newDirPath=GetNewDirPath(DataFolder,'pitchOnly_Long');
-    if ~exist(newDirPath, 'dir') %folder sim73 got stuck, I just overwrite onto it
-        mkdir(newDirPath);
-    end
-
-    for ii=1:length(fileNames)
-        movefile(fullfile(DataFolder,fileNames{ii}),fullfile(newDirPath,fileNames{ii}),'f');
-    end
+    %move movies
+    simNumber=getSimNumber(expiramentDataPath);
+    newNames.data=sprintf('data%g.mat',simNumber);
+    newNames.eventMask=sprintf('eventMask%g.mp4',simNumber);
+    newNames.logImage=sprintf('logImage%g.mp4',simNumber);
+    newNames.RGB=sprintf('RGB%g.mp4',simNumber);
+    movefile(fullfile(DataFolder,'data.mat'),...
+        fullfile(expiramentDataPath,newNames.data));
+    movefile(fullfile(DataFolder,'eventMask.mp4'),...
+        fullfile(expiramentMoviesPath,newNames.eventMask));
+    movefile(fullfile(DataFolder,'logImage.mp4'),...
+        fullfile(expiramentMoviesPath,newNames.logImage));
+    movefile(fullfile(DataFolder,'RGB.mp4'),...
+        fullfile(expiramentMoviesPath,newNames.RGB));
     
     fprintf('Finished Simulation %g out of %g\n',kk,IterationsAmnt);
-    fprintf('saved into %s\n',newDirPath);
+    fprintf('saved into %s\n',expiramentPath);
 end
 
 %reset to original
@@ -54,12 +60,7 @@ set_param('DeepLearningDataCreator/Base Dynamics and conversion to Scene coordia
 save_system(modelName);
 end
 %% Functions
-function newDirPath=GetNewDirPath(DataFolder,subFolder)
-if nargin<2
-    subFolder='';
-end
-listing=dir(fullfile(DataFolder,subFolder));
-listing=listing(3:end); %remove first two entries that are not relevant
-dirAmnt=sum([listing.isdir]);
-newDirPath=fullfile(DataFolder,subFolder,sprintf('sim%g',dirAmnt));
+function simNumber=getSimNumber(expiramentDataPath)
+listing=dir(expiramentDataPath);
+simNumber=length(listing)-2;
 end
