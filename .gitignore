@@ -9,3 +9,7 @@ Models/ElectroMechanical/ControlTestEquipment
 Models/ElectroMechanical/Controller.slx
 
 DeepLearning/Data/
+
+DeepLearning/Results/
+
+DeepLearning/trainedNets/
