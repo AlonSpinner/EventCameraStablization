@@ -1,9 +1,8 @@
 function CreateDataInSequence(IterationsAmnt)
 if nargin<1, IterationsAmnt=1; end
-%note1: maxOmega usually set to deg2rad([4 6 10]), now set to deg2rad([0 6
-%0]). This is done in dictionary
+%note1: maxOmega usually set to deg2rad([10 10 10])
 %note2: maxrIC can be set to have 0 yaw and roll. This is done in this
-%script, first row under loop
+%script, first row under loop. usually set to deg2rad([10 10 20])
 %Make sure the base driver is set to automatic (ball sim) in the model
 
 
@@ -12,13 +11,13 @@ modelName='DeepLearningDataCreator';
 open_system(modelName,'loadonly');
 DataFolder=fullfile(getProjRoot(),'DeepLearning','Data');
 
-expiramentName='04 pitchAndYaw_10degPerSec';
+expiramentName='05 all_10degPerSecSq';
 ts_camera=getDictionaryDesignData('ts_camera');
-simulationTime=50*ts_camera;
-maxrIC=getDictionaryDesignData('maxAngles');
+simulationTime=30*ts_camera;
+maxrIC=getDictionaryDesignData('maxAngles'); %most cases set to [10 10 20] degrees
 set_param('DeepLearningDataCreator/NoRecordTime','const',...
     num2str('10*ts_camera')); %no record time at start
-setDictionaryDesignData('maxOmega',deg2rad([0 10 10])); %<-- set maxOmega in dictionary for "All"
+setDictionaryDesignData('maxOmega',deg2rad([10 10 10])); %<-- set maxOmega in dictionary for "All"
 
 %Make directories
 expiramentPath=fullfile(DataFolder,expiramentName);
@@ -30,7 +29,7 @@ if ~exist(expiramentMoviesPath,'dir'), mkdir(expiramentMoviesPath); end
 
 for kk=1:IterationsAmnt
     %Change initial condition
-    rIC=maxrIC.*rand([1,3]).*randSign([1,3]) .* [0 1 1]; %multiplcation by zero here
+    rIC=maxrIC.*rand([1,3]).*randSign([1,3]) .* [1 1 1]; %multiplcation by zero here
     set_param('DeepLearningDataCreator/Base Dynamics and conversion to Scene coordiantes/RotationIntegrator',...
         'InitialCondition',sprintf('[%s]',num2str(rIC)));
     

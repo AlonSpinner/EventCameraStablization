@@ -9,6 +9,7 @@ classdef sequenceDatastore < matlab.io.Datastore & ...
         imageNetBackBone;
         angles;
         frameAmount;
+        acceleration;
     end
     
     properties(SetAccess = protected)
@@ -43,6 +44,7 @@ classdef sequenceDatastore < matlab.io.Datastore & ...
             ds.imageNetBackBone = false;
             ds.angles=[1,2,3]; %pitch,roll,yaw - all as default
             ds.frameAmount=31;
+            ds.acceleration=false;
         end
         
         function tf = hasdata(ds)
@@ -58,14 +60,21 @@ classdef sequenceDatastore < matlab.io.Datastore & ...
             info = struct;
             
             i = 0;
-            [predictors,responses]=deal(cell(miniBatchSize,1));
             while i < miniBatchSize && hasdata(ds.Datastore)
+                %change size while iterating instead of prealocating
+                %because need to check "hasdata" prior...
                 i = i + 1;
                 data=read(ds.Datastore);
                 predictors{i,1} = data.sequence(:,:,1:ds.frameAmount);
-                responses{i,1} = data.response(ds.angles);
+                if ds.acceleration
+                    rep=data.response(4:6); %acceleration
+                else
+                    rep=data.response(1:3); %omega
+                end
+                responses{i,1} = rep(ds.angles);
                 ds.CurrentFileIndex = ds.CurrentFileIndex + 1;
             end
+            
             data = preprocessData(predictors,responses,ds.imageNetBackBone);
         end
         
@@ -89,7 +98,6 @@ classdef sequenceDatastore < matlab.io.Datastore & ...
             numObservations = dsNew.NumObservations;
             idx = randperm(numObservations);
             fds.Files = fds.Files(idx);
-            dsNew.Labels = dsNew.Labels(idx);
         end
     end
     
@@ -119,7 +127,7 @@ for i = 1:miniBatchSize
     if size(X,3) < maxSequenceLength
         X(:,:,maxSequenceLength) = 0;
     end
-    
+
     if imageNetBackBone
         X=fTransform4imageNet(X);
     else
@@ -140,7 +148,7 @@ function data = readSequence(folder)
 % filename
 LoadData=load(folder);
 data.sequence=LoadData.data.eventMask.Data;
-data.response=LoadData.data.orientation.Data(end,4:6);
+data.response=LoadData.data.orientation.Data(end,4:end);
 end
 function newSequence=fTransform4imageNet(sequence)
 imageSize=[244 244 3]; %imageNet data size
