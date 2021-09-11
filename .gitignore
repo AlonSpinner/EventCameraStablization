@@ -8,8 +8,8 @@ Models/ElectroMechanical/ControlTestEquipment
 
 Models/ElectroMechanical/Controller.slx
 
-Models/ElectroMechanical/Tune
-
 DeepLearning/Data/
 
 DeepLearning/Results/
+
+Models/ElectroMechanical/Tune/
