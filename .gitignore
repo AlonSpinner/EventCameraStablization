@@ -12,4 +12,6 @@ DeepLearning/Data/
 
 DeepLearning/Results/
 
-Models/ElectroMechanical/Tune/
+Models/ElectroMechanical/Tune/TuneControllers.slx
+
+Models/ElectroMechanical/Tune/TuneCurrentControl.slx
